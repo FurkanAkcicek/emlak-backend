@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}İlanı Düzenle{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card bg-dark border-secondary shadow mb-5">
+            <div class="card-header border-secondary bg-primary text-white">
+                <h3 class="mb-0"><i class="fa-solid fa-pen-to-square"></i> İlanı Düzenle</h3>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <h5 class="text-primary border-bottom border-secondary pb-2">Temel Bilgiler</h5>
+                    
+                    <div class="alert alert-info py-2">
+                        <i class="fa-solid fa-info-circle"></i> İlan kategorisi güvenlik nedeniyle değiştirilemez.
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label">İlan Başlığı</label>
+                            {{ listing_form.title }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fiyat (TL)</label>
+                            {{ listing_form.price }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ana Fotoğraf</label>
+                            {% if listing.main_photo %}
+                                <div class="mb-2">
+                                    <img src="{{ listing.main_photo.url }}" class="img-thumbnail" style="height: 100px;">
+                                </div>
+                            {% endif %}
+                            {{ listing_form.main_photo }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">İl</label>
+                            {{ listing_form.city }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">İlçe</label>
+                            {{ listing_form.district }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Açıklama</label>
+                            {{ listing_form.description }}
+                        </div>
+                        
+                        <div class="d-none">
+                            {{ listing_form.category }}
+                        </div>
+                    </div>
+
+                    {% if is_housing %}
+                    <div class="mt-4">
+                        <h5 class="text-warning border-bottom border-secondary pb-2">Konut Detayları</h5>
+                        <div class="row g-3">
+                            <div class="col-md-3"><label>Emlak Tipi</label>{{ housing_form.emlak_tipi }}</div>
+                            <div class="col-md-3"><label>Oda Sayısı</label>{{ housing_form.oda_sayisi }}</div>
+                            <div class="col-md-3"><label>m² (Brüt)</label>{{ housing_form.m2_brut }}</div>
+                            <div class="col-md-3"><label>m² (Net)</label>{{ housing_form.m2_net }}</div>
+                            <div class="col-md-3"><label>Isıtma</label>{{ housing_form.isitma }}</div>
+                            <div class="col-md-3"><label>Bina Yaşı</label>{{ housing_form.bina_yasi }}</div>
+                            <div class="col-md-3"><label>Bulunduğu Kat</label>{{ housing_form.bulundugu_kat }}</div>
+                            <div class="col-md-3"><label>Kat Sayısı</label>{{ housing_form.kat_sayisi }}</div>
+                            
+                            <div class="col-12 mt-3">
+                                <div class="form-check form-check-inline">
+                                    {{ housing_form.balkon }} <label>Balkon</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    {{ housing_form.asansor }} <label>Asansör</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    {{ housing_form.otopark }} <label>Otopark</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    {{ housing_form.esyali }} <label>Eşyalı</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if is_land %}
+                    <div class="mt-4">
+                        <h5 class="text-warning border-bottom border-secondary pb-2">Arsa Detayları</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label>İmar Durumu</label>{{ land_form.imar_durumu }}</div>
+                            <div class="col-md-4"><label>Metrekare</label>{{ land_form.m2 }}</div>
+                            <div class="col-md-4"><label>m² Fiyatı</label>{{ land_form.m2_fiyat }}</div>
+                            <div class="col-md-4"><label>Ada No</label>{{ land_form.ada_no }}</div>
+                            <div class="col-md-4"><label>Parsel No</label>{{ land_form.parsel_no }}</div>
+                            <div class="col-md-4"><label>Pafta No</label>{{ land_form.pafta_no }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">Değişiklikleri Kaydet</button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}>

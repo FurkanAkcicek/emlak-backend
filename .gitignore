@@ -1,0 +1,19 @@
+# Python Sanal Ortamları (Gereksiz kalabalık)
+venv/
+myenv/
+env/
+__pycache__/
+*.pyc
+
+# Veritabanı (İçinde kişisel veriler olabilir, yüklenmez)
+db.sqlite3
+db.sqlite3-journal
+
+# Gizli Anahtarlar (ÇOK ÖNEMLİ - Şifrelerin burada)
+.env
+
+# Medya Dosyaları (Kullanıcıların yüklediği resimler yüklenmez)
+media/
+
+# VS Code Ayarları
+.vscode/

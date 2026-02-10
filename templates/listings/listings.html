@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+    {% if category %}
+        {{ category.title }} İlanları
+    {% else %}
+        Tüm İlanlar
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<section id="bc" class="mt-3">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'index' %}">Ana Sayfa</a>
+                </li>
+                <li class="breadcrumb-item active">
+                    {% if category %}
+                        {{ category.title }}
+                    {% else %}
+                        Tüm İlanlar
+                    {% endif %}
+                </li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<section id="listings" class="py-4">
+    <div class="container">
+        <div class="row">
+            
+            {% if listings %}
+                {% for listing in listings %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card listing-preview shadow h-100">
+                        
+                        <div class="position-relative">
+                            {% if listing.main_photo %}
+                                <img class="card-img-top" src="{{ listing.main_photo.url }}" alt="{{ listing.title }}" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <div class="card-img-top d-flex align-items-center justify-content-center bg-secondary text-white" style="height: 200px;">
+                                    <i class="fa-solid fa-image fa-3x"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-img-overlay">
+                                <h2>
+                                    <span class="badge bg-primary text-white">
+                                        {{ listing.price | intcomma }} TL
+                                    </span>
+                                </h2>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="listing-heading text-center">
+                                <h4 class="text-primary">{{ listing.title }}</h4>
+                                <p>
+                                    <i class="fas fa-map-marker-alt text-secondary"></i> {{ listing.city }} / {{ listing.district }}
+                                </p>
+                            </div>
+                            <hr>
+                            <div class="row py-2 text-secondary">
+                                <div class="col-6">
+                                    <i class="fas fa-th-large"></i> {{ listing.category.title }}
+                                </div>
+                                <div class="col-6">
+                                    <i class="fas fa-user"></i> {{ listing.seller.username }}
+                                </div>
+                            </div>
+                            <div class="row text-secondary pb-2">
+                                <div class="col-12">
+                                    <i class="fas fa-clock"></i> {{ listing.list_date | timesince }} önce
+                                </div>
+                            </div>
+                            <hr>
+                            <a href="{% url 'listing_detail' listing.id %}" class="btn btn-primary btn-block w-100">Detayları Gör</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            
+            {% else %}
+                <div class="col-md-12">
+                    <p>Bu kategoride henüz ilan bulunmamaktadır.</p>
+                </div>
+            {% endif %}
+
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                {% if listings.has_other_pages %}
+                    <ul class="pagination justify-content-center">
+                        
+                        {% if listings.has_previous %}
+                            <li class="page-item">
+                                <a href="?page={{ listings.previous_page_number }}" class="page-link">&laquo;</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link">&laquo;</a>
+                            </li>
+                        {% endif %}
+
+                        {% for i in listings.paginator.page_range %}
+                            {% if listings.number == i %}
+                                <li class="page-item active">
+                                    <a class="page-link">{{ i }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a href="?page={{ i }}" class="page-link">{{ i }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if listings.has_next %}
+                            <li class="page-item">
+                                <a href="?page={{ listings.next_page_number }}" class="page-link">&raquo;</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link">&raquo;</a>
+                            </li>
+                        {% endif %}
+
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+    </div>
+</section>
+{% endblock %}

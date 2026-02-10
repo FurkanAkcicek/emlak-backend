@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Yönetim Paneli{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-dark border-secondary mb-3">
+            <div class="card-header bg-warning text-dark fw-bold">
+                <i class="fa-solid fa-user-gear"></i> Hesabım
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item bg-secondary text-white">
+                    <i class="fa-solid fa-gauge"></i> İlanlarım
+                </li>
+                <li class="list-group-item bg-dark text-secondary border-secondary">
+                    <a href="{% url 'create_listing' %}" class="text-decoration-none text-muted">
+                        <i class="fa-solid fa-plus"></i> Yeni İlan Ekle
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div class="card bg-dark border-secondary shadow">
+            <div class="card-header border-secondary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Yönetim Paneli</h4>
+                <span class="badge bg-warning text-dark">Toplam: {{ listings.count }} İlan</span>
+            </div>
+            <div class="card-body">
+                {% if listings %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Fotoğraf</th>
+                                    <th scope="col">Başlık</th>
+                                    <th scope="col">Fiyat</th>
+                                    <th scope="col">Kategori</th>
+                                    <th scope="col">Durum</th>
+                                    <th scope="col">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for listing in listings %}
+                                <tr>
+                                    <td>
+                                        {% if listing.main_photo %}
+                                            <img src="{{ listing.main_photo.url }}" width="60" height="40" style="object-fit: cover;" class="rounded">
+                                        {% else %}
+                                            <span class="text-muted">Yok</span>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td>
+                                        <a href="{% url 'listing_detail' listing.id %}" class="text-white text-decoration-none fw-bold">
+                                            {{ listing.title }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ listing.city }} / {{ listing.district }}</small>
+                                    </td>
+                                    
+                                    <td class="text-success fw-bold">{{ listing.price }} TL</td>
+                                    
+                                    <td><span class="badge bg-secondary">{{ listing.category.name }}</span></td>
+                                    
+                                    <td>
+                                        {% if listing.is_published %}
+                                            <span class="badge bg-success"><i class="fa-solid fa-check"></i> Yayında</span>
+                                        {% else %}
+                                            <span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> Gizli</span>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td>
+                                        <a href="{% url 'listing_detail' listing.id %}" class="btn btn-sm btn-info text-white" title="Görüntüle">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'edit_listing' listing.id %}" class="btn btn-sm btn-primary" title="Düzenle">
+    <i class="fa-solid fa-pen"></i>
+</a>
+                                        <a href="{% url 'delete_listing' listing.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Bu ilanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')" title="Sil">
+    <i class="fa-solid fa-trash"></i>
+</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <hr class="my-5"> <h3 class="text-primary mb-3">
+        <i class="fa-solid fa-envelope-open-text"></i> Gelen Mesajlar
+    </h3>
+
+    {% if contacts %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover shadow">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th scope="col">İlan</th>
+                        <th scope="col">Gönderen</th>
+                        <th scope="col">E-Posta</th>
+                        <th scope="col">Mesaj</th>
+                        <th scope="col" class="text-center">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in contacts %}
+                        <tr>
+                            <td class="fw-bold">{{ contact.listing }}</td>
+                            <td>{{ contact.name }}</td>
+                            <td>
+                                <a href="mailto:{{ contact.email }}" class="text-decoration-none">
+                                    {{ contact.email }}
+                                </a>
+                            </td>
+                            <td>
+                                {{ contact.message | truncatechars:30 }}
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#messageModal{{ contact.id }}">
+                                    <i class="fa-solid fa-eye"></i> Oku
+                                </button>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="messageModal{{ contact.id }}" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-info text-white">
+                                        <h5 class="modal-title" id="messageModalLabel">Mesaj Detayı</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p><strong>İlan:</strong> {{ contact.listing }}</p>
+                                        <p><strong>Gönderen:</strong> {{ contact.name }}</p>
+                                        <p><strong>Telefon:</strong> {{ contact.phone }}</p>
+                                        <p><strong>E-Posta:</strong> {{ contact.email }}</p>
+                                        <hr>
+                                        <p class="lead">{{ contact.message }}</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <a href="mailto:{{ contact.email }}" class="btn btn-primary">
+                                            <i class="fa-solid fa-reply"></i> Yanıtla
+                                        </a>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="fa-solid fa-inbox"></i> Henüz ilanlarınıza gelen bir mesaj yok.
+        </div>
+    {% endif %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fa-solid fa-folder-open fa-3x text-secondary mb-3"></i>
+                        <p class="text-muted">Henüz hiç ilan eklemediniz.</p>
+                        <a href="{% url 'create_listing' %}" class="btn btn-warning fw-bold">
+                            <i class="fa-solid fa-plus"></i> İlk İlanını Ver
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<hr class="my-5">
+
+    <h3 class="text-danger mb-3">
+        <i class="fa-solid fa-heart"></i> Favori İlanlarım
+    </h3>
+
+    {% if favorites %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover shadow">
+                <thead class="bg-danger text-white">
+                    <tr>
+                        <th scope="col">Fotoğraf</th>
+                        <th scope="col">Başlık</th>
+                        <th scope="col">Fiyat</th>
+                        <th scope="col" class="text-center">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fav in favorites %}
+                        <tr>
+                            <td style="width: 150px;">
+                                {% if fav.listing.main_photo %}
+                                    <img src="{{ fav.listing.main_photo.url }}" class="img-fluid rounded" style="height: 80px; width: 100%; object-fit: cover;">
+                                {% else %}
+                                    <span class="badge bg-secondary">Foto Yok</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="align-middle">
+                                <a href="{% url 'listing_detail' fav.listing.id %}" class="text-decoration-none fw-bold text-dark">
+                                    {{ fav.listing.title }}
+                                </a>
+                            </td>
+                            
+                            <td class="align-middle text-success fw-bold">
+                                {{ fav.listing.price }} TL
+                            </td>
+                            
+                            <td class="align-middle text-center">
+                                <a href="{% url 'toggle_favorite' fav.listing.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Favorilerden çıkarmak istediğinize emin misiniz?')">
+                                    <i class="fa-solid fa-trash"></i> Çıkar
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-secondary">
+            <i class="fa-regular fa-heart"></i> Henüz favorilere eklediğiniz bir ilan yok.
+        </div>
+    {% endif %}
+    
+    <div class="mb-5"></div>
+    {% endblock %}  ```
+
+Yapıştırıp kaydet, sonra Dashboard sayfasına F5 at bakalım. En altta kırmızı tabloları görüyor musun? 😎
