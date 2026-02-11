@@ -288,3 +288,51 @@ class ListingListAPIView(generics.ListAPIView):
     
     # 6. Sıralama izinleri
     ordering_fields = ['price', 'list_date'] # ?ordering=price
+from django.shortcuts import render
+from .models import Listing
+import json
+
+def map_view(request):
+    listings = Listing.objects.exclude(lat__isnull=True).exclude(lon__isnull=True)
+    
+    locations = []
+    for listing in listings:
+        image_urls = []
+        
+        # 1. Fotoğrafları Topla
+        if listing.main_photo:
+            image_urls.append(listing.main_photo.url)
+        for photo in listing.listingphoto_set.all():
+            image_urls.append(photo.image.url)
+            
+        # 2. Detay Bilgisini Çek (En Garanti Yol)
+        # getattr bazen ters ilişkilerde takılabilir, o yüzden direkt model üzerinden deneyelim
+        try:
+            # Eğer related_name vermediysen Django 'housingdetail' (küçük harf) kullanır
+            detail = listing.housingdetail 
+        except:
+            detail = None
+
+        # 3. Listeye Ekle
+        locations.append({
+            'id': listing.id,
+            'title': listing.title,
+            'price': float(listing.price),
+            'lat': float(listing.lat),
+            'lon': float(listing.lon),
+            'images': image_urls,
+            'url': f"/ilan/{listing.id}",
+            'district': listing.district,
+            'city': "Isparta",
+            # Veriler
+            'm2': detail.m2_brut if detail else "---",
+            'rooms': detail.oda_sayisi if detail else "---",
+            'floor': detail.bulundugu_kat if detail else "---",
+            'heating': detail.isitma if detail else "---",
+            'description': listing.description[:150] if listing.description else "Açıklama belirtilmemiş."
+        })
+    
+    context = {
+        'locations_json': json.dumps(locations) 
+    }
+    return render(request, 'listings/map.html', context)

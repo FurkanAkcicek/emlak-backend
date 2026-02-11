@@ -20,6 +20,8 @@ urlpatterns = [
     
     # Arama
     path('arama', views.search, name='search'),
+
+    path('harita/', views.map_view, name='map_view'),
     
     # İlan Verme (Sonundaki virgüle dikkat!)
     path('ilan-ver', views.create_listing, name='create_listing'),

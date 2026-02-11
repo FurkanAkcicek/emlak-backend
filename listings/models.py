@@ -37,6 +37,15 @@ class Listing(models.Model):
     is_published = models.BooleanField(default=True, verbose_name="Yayında mı?")
     list_date = models.DateTimeField(default=now, blank=True, verbose_name="Eklenme Tarihi")
 
+    # ... description alanı ...
+    description = models.TextField(blank=True)
+    
+    # YENİ EKLENENLER: KONUM BİLGİSİ
+    lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name="Enlem (Latitude)")
+    lon = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name="Boylam (Longitude)")
+    
+    # ... diğer alanlar ...
+
     def __str__(self):
         return self.title
     

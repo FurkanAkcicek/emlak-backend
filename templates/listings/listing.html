@@ -3,187 +3,290 @@
 
 {% block content %}
 
-<section id="showcase-inner" class="py-5 text-white" style="background-color: #333;">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-md-12">
-                <h1 class="display-4">{{ listing.title }}</h1>
-                <p class="lead"><i class="fas fa-map-marker"></i> {{ listing.district }} / {{ listing.city }}</p>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+
+    <style>
+        /* Slider Özelleştirmeleri */
+        .swiper {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Ana Büyük Slider */
+        .mySwiper2 {
+            height: 500px; /* Büyük resmin yüksekliği */
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Küçük Resimler (Thumbnails) */
+        .mySwiper {
+            height: 100px; /* Küçük resimlerin yüksekliği */
+            box-sizing: border-box;
+            padding: 10px 0;
+        }
+
+        .mySwiper .swiper-slide {
+            width: 25%;
+            height: 100%;
+            opacity: 0.4; /* Seçili olmayanlar silik dursun */
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .mySwiper .swiper-slide-thumb-active {
+            opacity: 1; /* Seçili olan parlak olsun */
+            border: 2px solid #28a745; /* Yeşil çerçeve (Emlak rengi) */
+        }
+
+        .swiper-slide img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Resmi kutuya sığdırır, uzatmaz */
+        }
+    
+        /* Ok İşaretlerini Güzelleştir ve ÖNE AL */
+        .swiper-button-next, .swiper-button-prev {
+            color: #fff; 
+            background-color: rgba(0,0,0,0.5); 
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        
+            /* --- YENİ EKLENEN SİHİRLİ KOD --- */
+            z-index: 100; /* Her şeyin üstünde dur! */
+            cursor: pointer; /* Tıklanabilir el işareti çıksın */
+        }
+            .swiper-button-next:after, .swiper-button-prev:after {
+                font-size: 20px;
+                font-weight: bold;
+            }
+    </style>
+
+    <section id="showcase-inner" class="py-5 text-white" style="background-color: #333;">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-12">
+                    <h1 class="display-4">{{ listing.title }}</h1>
+                    <p class="lead"><i class="fas fa-map-marker"></i> {{ listing.district }} / {{ listing.city }}</p>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<section id="listing" class="py-4">
-    <div class="container">
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="row">
+    <section id="listing" class="py-4">
+        <div class="container">
             
-            <div class="col-md-8">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
                 
-                {% if gallery_photos %}
-                    <img src="{{ gallery_photos.0.image.url }}" class="img-fluid rounded shadow mb-3 w-100" style="max-height: 500px; object-fit: cover;">
-                {% else %}
-                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center rounded shadow mb-3" style="height: 400px;">
-                        <span><i class="fa-solid fa-image fa-3x"></i> Fotoğraf Yok</span>
-                    </div>
-                {% endif %}
+                <div class="col-md-8">
 
-                {% if gallery_photos and gallery_photos.count > 1 %}
-                    <div class="row mb-4">
-                        {% for photo in gallery_photos|slice:"1:" %}
-                            <div class="col-md-3 col-4 mb-2">
-                                <a href="{{ photo.image.url }}" target="_blank">
-                                    <img src="{{ photo.image.url }}" class="img-fluid rounded border shadow-sm" style="height: 100px; width: 100%; object-fit: cover;">
-                                </a>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-
-                <div class="card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-dark text-white">
-                        <i class="fas fa-align-left"></i> İlan Açıklaması
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">{{ listing.description }}</p>
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-dark text-white">
-                        <i class="fas fa-list"></i> Özellikler
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-striped mb-0">
-                            <tbody>
-                                <tr>
-                                    <th style="width: 40%;">İlan Tarihi</th>
-                                    <td>{{ listing.list_date | date:"d M Y" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Kategori</th>
-                                    <td>{{ listing.category.name }}</td>
-                                </tr>
-
-                                {% if listing.housingdetail %}
-                                    <tr><th>Emlak Tipi</th><td>{{ listing.housingdetail.emlak_tipi }}</td></tr>
-                                    <tr><th>Brüt m²</th><td>{{ listing.housingdetail.m2_brut }} m²</td></tr>
-                                    <tr><th>Net m²</th><td>{{ listing.housingdetail.m2_net }} m²</td></tr>
-                                    <tr><th>Oda Sayısı</th><td>{{ listing.housingdetail.oda_sayisi }}</td></tr>
-                                    <tr><th>Bina Yaşı</th><td>{{ listing.housingdetail.bina_yasi }}</td></tr>
-                                    <tr><th>Kat / Toplam Kat</th><td>{{ listing.housingdetail.bulundugu_kat }} / {{ listing.housingdetail.kat_sayisi }}</td></tr>
-                                    <tr><th>Isıtma</th><td>{{ listing.housingdetail.isitma }}</td></tr>
-                                    <tr><th>Banyo Sayısı</th><td>{{ listing.housingdetail.banyo_sayisi }}</td></tr>
-                                    <tr><th>Balkon</th><td>{% if listing.housingdetail.balkon %}<i class="fas fa-check text-success"></i> Var{% else %}<i class="fas fa-times text-danger"></i> Yok{% endif %}</td></tr>
-                                    <tr><th>Asansör</th><td>{% if listing.housingdetail.asansor %}<i class="fas fa-check text-success"></i> Var{% else %}<i class="fas fa-times text-danger"></i> Yok{% endif %}</td></tr>
-                                    <tr><th>Eşyalı</th><td>{% if listing.housingdetail.esyali %}<i class="fas fa-check text-success"></i> Evet{% else %}<i class="fas fa-times text-danger"></i> Hayır{% endif %}</td></tr>
-                                    <tr><th>Site İçinde</th><td>{% if listing.housingdetail.site_icerisinde %}<i class="fas fa-check text-success"></i> Evet{% else %}<i class="fas fa-times text-danger"></i> Hayır{% endif %}</td></tr>
-                                    {% if listing.housingdetail.site_icerisinde %}
-                                        <tr><th>Site Adı</th><td>{{ listing.housingdetail.site_adi }}</td></tr>
-                                        <tr><th>Aidat</th><td>{{ listing.housingdetail.aidat }} TL</td></tr>
-                                    {% endif %}
-                                {% endif %}
-
-                                {% if listing.landdetail %}
-                                    <tr><th>Emlak Tipi</th><td>{{ listing.landdetail.emlak_tipi }}</td></tr>
-                                    <tr><th>İmar Durumu</th><td>{{ listing.landdetail.imar_durumu }}</td></tr>
-                                    <tr><th>Metrekare</th><td>{{ listing.landdetail.m2 }} m²</td></tr>
-                                    <tr><th>m² Fiyatı</th><td>{{ listing.landdetail.m2_fiyat }} TL</td></tr>
-                                    <tr><th>Ada No</th><td>{{ listing.landdetail.ada_no }}</td></tr>
-                                    <tr><th>Parsel No</th><td>{{ listing.landdetail.parsel_no }}</td></tr>
-                                    <tr><th>Kaks (Emsal)</th><td>{{ listing.landdetail.kaks }}</td></tr>
-                                    <tr><th>Gabari</th><td>{{ listing.landdetail.gabari }}</td></tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div> <div class="col-md-4">
-                
-                <div class="card mb-3 shadow border-success">
-                    <div class="card-body text-center">
-                        <h3 class="text-success display-6 fw-bold">{{ listing.price | intcomma }} TL</h3>
-                        <p class="text-muted mb-0">Satış Fiyatı</p>
-                    </div>
-                </div>
-
-                {% if user.is_authenticated %}
-                    <div class="d-grid gap-2 mb-3">
-                        <a href="{% url 'toggle_favorite' listing.id %}" class="btn {% if is_fav %}btn-success{% else %}btn-outline-danger{% endif %} btn-lg">
-                            {% if is_fav %}
-                                <i class="fa-solid fa-heart"></i> Favorilerimde
+                    <div style="--swiper-navigation-color: #fff; --swiper-pagination-color: #fff" class="swiper mySwiper2 shadow-sm rounded mb-2">
+                        <div class="swiper-wrapper">
+                            {% if gallery_photos %}
+                                {% for photo in gallery_photos %}
+                                    <div class="swiper-slide">
+                                        <a href="{{ photo.image.url }}" data-fancybox="gallery" data-caption="{{ listing.title }}">
+                                            <img src="{{ photo.image.url }}" alt="{{ listing.title }}" />
+                                        </a>
+                                    </div>
+                                {% endfor %}
                             {% else %}
-                                <i class="fa-regular fa-heart"></i> Favorilere Ekle
+                                <div class="swiper-slide bg-secondary d-flex align-items-center justify-content-center text-white" style="height: 400px;">
+                                    <span><i class="fas fa-image fa-3x"></i> Fotoğraf Yok</span>
+                                </div>
                             {% endif %}
-                        </a>
-                    </div>
-                {% endif %}
-
-                <div class="card mb-3">
-                    <div class="card-header bg-secondary text-white">
-                        <i class="fas fa-user"></i> İlan Sahibi
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">{{ listing.seller.get_full_name }}</h5>
-                        <p class="card-text"><i class="fas fa-envelope"></i> {{ listing.seller.email }}</p>
                         </div>
-                </div>
-
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <i class="fas fa-paper-plane"></i> Mesaj Gönder
+                        <div class="swiper-button-next"></div>
+                        <div class="swiper-button-prev"></div>
                     </div>
-                    <div class="card-body">
-                        <form action="{% url 'contact' %}" method="POST">
-                            {% csrf_token %}
-                            <input type="hidden" name="user_id" value="{{ user.id }}">
-                            <input type="hidden" name="listing_id" value="{{ listing.id }}">
-                            
-                            <div class="form-group mb-2">
-                                <label>İlan</label>
-                                <input type="text" name="listing" class="form-control" value="{{ listing.title }}" readonly>
-                            </div>
-                            
-                            {% if user.is_authenticated %}
-                                <input type="hidden" name="name" value="{{ user.first_name }} {{ user.last_name }}">
-                                <input type="hidden" name="email" value="{{ user.email }}">
-                                <input type="hidden" name="phone" value=""> 
-                            {% else %}
-                                <div class="form-group mb-2">
-                                    <label>Ad Soyad</label>
-                                    <input type="text" name="name" class="form-control" required>
-                                </div>
-                                <div class="form-group mb-2">
-                                    <label>Email</label>
-                                    <input type="email" name="email" class="form-control" required>
-                                </div>
-                                <div class="form-group mb-2">
-                                    <label>Telefon</label>
-                                    <input type="text" name="phone" class="form-control">
-                                </div>
-                            {% endif %}
 
-                            <div class="form-group mb-3">
-                                <label>Mesajınız</label>
-                                <textarea name="message" rows="3" class="form-control" required>Bu ilanla ilgileniyorum, detaylı bilgi alabilir miyim?</textarea>
-                            </div>
-                            
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">Gönder</button>
-                            </div>
-                        </form>
+                    {% if gallery_photos %}
+                    <div thumbsSlider="" class="swiper mySwiper mb-4">
+                        <div class="swiper-wrapper">
+                            {% for photo in gallery_photos %}
+                                <div class="swiper-slide">
+                                    <img src="{{ photo.image.url }}" />
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
+                    {% endif %}
 
-            </div> </div> </div>
-</section>
+                    <div class="card mb-4 border-0 shadow-sm mt-3">
+                        <div class="card-header bg-dark text-white">
+                            <i class="fas fa-align-left"></i> İlan Açıklaması
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ listing.description }}</p>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-dark text-white">
+                            <i class="fas fa-list"></i> Özellikler
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-striped mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th style="width: 40%;">İlan Tarihi</th>
+                                        <td>{{ listing.list_date | date:"d M Y" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Kategori</th>
+                                        <td>{{ listing.category.name }}</td>
+                                    </tr>
+
+                                    {% if listing.housingdetail %}
+                                        <tr><th>Emlak Tipi</th><td>{{ listing.housingdetail.emlak_tipi }}</td></tr>
+                                        <tr><th>Brüt m²</th><td>{{ listing.housingdetail.m2_brut }} m²</td></tr>
+                                        <tr><th>Net m²</th><td>{{ listing.housingdetail.m2_net }} m²</td></tr>
+                                        <tr><th>Oda Sayısı</th><td>{{ listing.housingdetail.oda_sayisi }}</td></tr>
+                                        <tr><th>Bina Yaşı</th><td>{{ listing.housingdetail.bina_yasi }}</td></tr>
+                                        <tr><th>Kat / Toplam Kat</th><td>{{ listing.housingdetail.bulundugu_kat }} / {{ listing.housingdetail.kat_sayisi }}</td></tr>
+                                        <tr><th>Isıtma</th><td>{{ listing.housingdetail.isitma }}</td></tr>
+                                        <tr><th>Banyo Sayısı</th><td>{{ listing.housingdetail.banyo_sayisi }}</td></tr>
+                                        <tr><th>Balkon</th><td>{% if listing.housingdetail.balkon %}<i class="fas fa-check text-success"></i> Var{% else %}<i class="fas fa-times text-danger"></i> Yok{% endif %}</td></tr>
+                                        <tr><th>Asansör</th><td>{% if listing.housingdetail.asansor %}<i class="fas fa-check text-success"></i> Var{% else %}<i class="fas fa-times text-danger"></i> Yok{% endif %}</td></tr>
+                                        <tr><th>Eşyalı</th><td>{% if listing.housingdetail.esyali %}<i class="fas fa-check text-success"></i> Evet{% else %}<i class="fas fa-times text-danger"></i> Hayır{% endif %}</td></tr>
+                                        <tr><th>Site İçinde</th><td>{% if listing.housingdetail.site_icerisinde %}<i class="fas fa-check text-success"></i> Evet{% else %}<i class="fas fa-times text-danger"></i> Hayır{% endif %}</td></tr>
+                                        {% if listing.housingdetail.site_icerisinde %}
+                                            <tr><th>Site Adı</th><td>{{ listing.housingdetail.site_adi }}</td></tr>
+                                            <tr><th>Aidat</th><td>{{ listing.housingdetail.aidat }} TL</td></tr>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if listing.landdetail %}
+                                        <tr><th>Emlak Tipi</th><td>{{ listing.landdetail.emlak_tipi }}</td></tr>
+                                        <tr><th>İmar Durumu</th><td>{{ listing.landdetail.imar_durumu }}</td></tr>
+                                        <tr><th>Metrekare</th><td>{{ listing.landdetail.m2 }} m²</td></tr>
+                                        <tr><th>m² Fiyatı</th><td>{{ listing.landdetail.m2_fiyat }} TL</td></tr>
+                                        <tr><th>Ada No</th><td>{{ listing.landdetail.ada_no }}</td></tr>
+                                        <tr><th>Parsel No</th><td>{{ listing.landdetail.parsel_no }}</td></tr>
+                                        <tr><th>Kaks (Emsal)</th><td>{{ listing.landdetail.kaks }}</td></tr>
+                                        <tr><th>Gabari</th><td>{{ listing.landdetail.gabari }}</td></tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div> <div class="col-md-4">
+                    
+                    <div class="card mb-3 shadow border-success">
+                        <div class="card-body text-center">
+                            <h3 class="text-success display-6 fw-bold">{{ listing.price | intcomma }} TL</h3>
+                            <p class="text-muted mb-0">Satış Fiyatı</p>
+                        </div>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                        <div class="d-grid gap-2 mb-3">
+                            <a href="{% url 'toggle_favorite' listing.id %}" class="btn {% if is_fav %}btn-success{% else %}btn-outline-danger{% endif %} btn-lg">
+                                {% if is_fav %}
+                                    <i class="fa-solid fa-heart"></i> Favorilerimde
+                                {% else %}
+                                    <i class="fa-regular fa-heart"></i> Favorilere Ekle
+                                {% endif %}
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    <div class="card mb-3">
+                        <div class="card-header bg-secondary text-white">
+                            <i class="fas fa-user"></i> İlan Sahibi
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ listing.seller.get_full_name }}</h5>
+                            <p class="card-text"><i class="fas fa-envelope"></i> {{ listing.seller.email }}</p>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-paper-plane"></i> Mesaj Gönder
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'contact' %}" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <input type="hidden" name="listing_id" value="{{ listing.id }}">
+                                
+                                <div class="form-group mb-2">
+                                    <label>İlan</label>
+                                    <input type="text" name="listing" class="form-control" value="{{ listing.title }}" readonly>
+                                </div>
+                                
+                                {% if user.is_authenticated %}
+                                    <input type="hidden" name="name" value="{{ user.first_name }} {{ user.last_name }}">
+                                    <input type="hidden" name="email" value="{{ user.email }}">
+                                    <input type="hidden" name="phone" value=""> 
+                                {% else %}
+                                    <div class="form-group mb-2">
+                                        <label>Ad Soyad</label>
+                                        <input type="text" name="name" class="form-control" required>
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <label>Email</label>
+                                        <input type="email" name="email" class="form-control" required>
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <label>Telefon</label>
+                                        <input type="text" name="phone" class="form-control">
+                                    </div>
+                                {% endif %}
+
+                                <div class="form-group mb-3">
+                                    <label>Mesajınız</label>
+                                    <textarea name="message" rows="3" class="form-control" required>Bu ilanla ilgileniyorum, detaylı bilgi alabilir miyim?</textarea>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Gönder</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div> </div> </div> </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+    <script>
+        // 1. Fancybox'ı (Lightbox) Başlat
+        Fancybox.bind("[data-fancybox]", {});
+
+        // 2. Küçük Resim Slider'ını Tanımla
+        var swiper = new Swiper(".mySwiper", {
+            spaceBetween: 10,
+            slidesPerView: 4,
+            freeMode: true,
+            watchSlidesProgress: true,
+        });
+
+        // 3. Büyük Resim Slider'ını Tanımla
+        var swiper2 = new Swiper(".mySwiper2", {
+            spaceBetween: 10,
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+            thumbs: {
+                swiper: swiper,
+            },
+        });
+    </script>
 
 {% endblock %}

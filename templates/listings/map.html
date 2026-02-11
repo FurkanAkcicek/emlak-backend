@@ -1,0 +1,690 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+    /* Harita Kutusu */
+    #map {
+        height: 600px;
+        width: 100%;
+        border-radius: 15px;
+        border: 2px solid #333;
+        z-index: 1;
+    }
+    
+    .custom-dot {
+        background-color: #000;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        transition: transform 0.2s;
+    }
+    .custom-dot:hover {
+        transform: scale(1.5);
+        background-color: #28a745;
+    }
+
+    /* 1. Leaflet'in Varsayılan Beyaz Boşluklarını Sıfırlama (EN KRİTİK KISIM) */
+    .custom-popup-modern .leaflet-popup-content-wrapper {
+        padding: 0 !important;   /* İç boşluğu tamamen yok et */
+        border-radius: 12px !important;
+        overflow: hidden !important; /* Fotoğrafın köşeleri taşmasın */
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .custom-popup-modern .leaflet-popup-content {
+        margin: 0 !important;   /* Kenar boşluklarını sıfırla */
+        width: 230px !important; /* Genişliği sabitle */
+    }
+
+    /* 2. Kart İçeriği */
+    .map-card {
+        width: 230px;
+        background: white;
+        text-align: left; /* Yazıları sola yasla daha modern durur */
+    }
+
+    /* 3. Fotoğraf Ayarı */
+    .carousel-inner img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* 4. Fotoğraf Sayacı (Opsiyonel: Fotoğrafın üzerine şık bir şekilde koyabilirsin) */
+    .photo-count-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    /* 5. Okları Küçültme (Popup içinde çok büyük durmasınlar) */
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        width: 20px !important;
+        height: 20px !important;
+    }
+    /* Şehir İsimleri Etiket Tasarımı */
+    .city-label {
+        background: rgba(0, 0, 0, 0.75); /* Siyah yarı şeffaf */
+        color: white;                   /* Beyaz yazı */
+        border: none;
+        border-radius: 5px;
+        padding: 3px 10px;
+        font-size: 13px;
+        font-weight: bold;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    /* --- GECE MODU SİHRİ (GÜÇLENDİRİLMİŞ) --- */
+    /* Haritanın içindeki tüm resim katmanlarını (tiles) yakalıyoruz */
+    .dark-mode-map .leaflet-tile-container img, 
+    .dark-mode-map .leaflet-tile {
+        filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) !important;
+    }
+
+    /* Harita arkaplanını simsiyah yapalım */
+    .dark-mode-map {
+        background: #191a1a !important;
+    }
+
+    /* Gece modunda şehir sınırları (GeoJSON) parlasın diye renkleri ters çevirelim */
+    .dark-mode-map path.leaflet-interactive {
+        stroke: #fff !important; /* Çizgiler beyaz olsun */
+        fill: #fff !important;   /* Dolgu beyaz olsun (opacity ile ayarlanacak) */
+    }
+
+    /* Butonun her zaman görünür olması için sabit stil */
+    .map-theme-toggle {
+        position: absolute;
+        top: 90px; /* 80-90px civarı Zoom butonlarının güvenli bir şekilde altına düşürür */
+        left: 10px;
+        z-index: 1000;
+        background: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        font-weight: bold;
+        border: 1px solid rgba(0,0,0,0.2);
+    }
+    .leaflet-tooltip-pane .city-label {
+        background: rgba(0, 0, 0, 0.8) !important; /* Kendi siyah kutumuz */
+        border: none !important;                  /* Dikdörtgen kenarlık silindi */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+        color: white !important;
+        font-weight: bold;
+        padding: 4px 10px;
+        border-radius: 4px;
+    }
+
+    /* Tooltip'in o meşhur küçük beyaz okunu (triangle) da gizleyelim */
+    .leaflet-tooltip-top:before, 
+    .leaflet-tooltip-bottom:before, 
+    .leaflet-tooltip-left:before, 
+    .leaflet-tooltip-right:before {
+        display: none !important;
+    }
+    /* Harita üzerindeki elemanlara tıklandığında çıkan o mavi/siyah dikdörtgeni siler */
+    path.leaflet-interactive:focus {
+        outline: none !important;
+    }
+
+    #map:focus {
+        outline: none !important;
+    }
+
+    /* Eğer hala çıkıyorsa genel bir temizlik */
+    .leaflet-container :focus {
+        outline: none !important;
+    }
+    .price-filter-box {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        width: 220px;
+        border: 1px solid #ddd;
+    }
+
+    #priceRange {
+        width: 100%;
+        cursor: pointer;
+        accent-color: #28a745; /* Slider rengi yeşil olsun */
+    }
+    #manualPriceInput {
+    font-weight: bold;
+    color: #28a745;
+    border: 1px solid #ced4da;
+    text-align: center;
+    }
+
+    /* Chrome/Safari'de sayı oklarını gizlemek istersen (opsiyonel) */
+    #manualPriceInput::-webkit-inner-spin-button, 
+    #manualPriceInput::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    /* Katman Seçici Menüsü Tasarımı */
+    .leaflet-control-layers {
+        border-radius: 8px !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+        padding: 5px;
+    }
+
+    .leaflet-control-layers-expanded {
+        background: rgba(255, 255, 255, 0.9) !important;
+        font-weight: bold;
+        color: #333;
+    }
+        /* Popup kutusunu modernleştirme */
+    .leaflet-popup-content-wrapper {
+        padding: 0 !important; /* Fotoğrafın tam oturması için */
+        overflow: hidden;
+        border-radius: 12px !important;
+    }
+
+    .leaflet-popup-content {
+        margin: 0 !important;
+        width: 250px !important; /* Popup genişliği */
+    }
+
+    /* Ok işaretini (tip) marker'a yaklaştır */
+    .leaflet-popup {
+        margin-bottom: 5px !important;
+    }
+
+    /* Carousel (Kaydırıcı) Boyutu */
+        .popup-carousel img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover; /* Fotoğrafı sünmeden sığdırır */
+    }
+
+    /* Fiyat Etiketi */
+    .popup-price {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #28a745;
+        margin: 10px 10px 0 10px;
+    }
+
+    .popup-title {
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin: 2px 10px;
+        color: #333;
+    }
+
+    .popup-location {
+        font-size: 0.8rem;
+        color: #777;
+        margin: 0 10px 10px 10px;
+    }
+    /* Modal içindeki başlık ve metin renklerini sabitleme */
+    #quickViewContent h4 {
+        color: #212529 !important; /* Koyu gri/siyah */
+        font-weight: 700;
+    }
+
+    #quickViewContent p, 
+    #quickViewContent .text-muted {
+        color: #6c757d !important; /* Okunaklı gri */
+    }
+
+    /* Özellik matrisindeki başlıklar (m2, Oda Sayısı yazan yerler) */
+    .modal-body .text-muted {
+        color: #495057 !important;
+    }
+</style>
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4 display-5">İlan Haritası</h2>
+        
+        <div class="shadow-lg p-2 bg-white rounded" style="position: relative;">
+            
+            <div class="map-theme-toggle" onclick="toggleDarkMode()" id="themeBtn">
+                <i class="fas fa-moon"></i> <span>Gece Modu</span>
+            </div>
+
+            <div class="price-filter-box">
+    <h6 style="font-size: 14px; font-weight: bold;"><i class="fas fa-coins text-warning"></i> Fiyat Filtresi</h6>
+    
+    <div class="input-group input-group-sm mb-2">
+        <input type="number" id="manualPriceInput" class="form-control" value="100000000" step="100000">
+        <span class="input-group-text">TL</span>
+    </div>
+
+    <input type="range" id="priceRange" min="0" max="100000000" step="100000" value="100000000">
+    
+    <div class="d-flex justify-content-between mt-1">
+        <span class="badge bg-secondary" style="font-size: 10px;">0 TL</span>
+        <span id="currentPriceLabel" class="badge bg-success" style="font-size: 10px;">100M TL</span>
+    </div>
+</div>
+
+            <div id="map"></div>
+
+        </div>
+    </div>
+</section>
+    ...
+...
+
+    <div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 20px; border: none; overflow: hidden;">
+                <div class="modal-body p-0">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3 z-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="row g-0" id="quickViewContent">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var locations = JSON.parse("{{ locations_json|escapejs }}");
+    var allMarkers = []; 
+
+    // --- KATMAN TANIMLAMALARI ---
+    
+    // 1. Sade / Kara Kalem Modu
+    var lightMap = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CARTO',
+        maxZoom: 20
+    });
+
+    // 2. Uydu Görünümü
+    var satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+        maxZoom: 18
+    });
+
+    // 3. Topoğrafik (Arazi) Modu
+    var terrainMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Style: &copy; OpenTopoMap',
+        maxZoom: 17
+    });
+
+    // --- HARİTAYI BAŞLATMA ---
+    // Haritayı lightMap (Sade) katmanı varsayılan olacak şekilde kuruyoruz
+    var map = L.map('map', {
+        center: [39.0, 35.0],
+        zoom: 6,
+        layers: [lightMap] // Başlangıçta hangi katman görünsün?
+    });
+
+    // --- KATMAN SEÇİCİ MENÜSÜ ---
+    var baseMaps = {
+        "Sade Harita": lightMap,
+        "Uydu Görünümü": satelliteMap,
+        "Arazi Yapısı": terrainMap
+    };
+
+    // Menüyü sağ üste ekle (collapsed: true sayesinde mouse üzerine gelince açılır)
+    L.control.layers(baseMaps, null, { 
+        position: 'bottomright',
+        collapsed: true 
+    }).addTo(map);
+
+    // (Bundan sonra senin GeoJSON çekme ve locations.forEach döngün devam edecek...)
+// --- TÜRKİYE SINIRLARINI ÇİZME ---
+var geojsonLayer;
+
+fetch('/static/data/turkey.json') 
+    .then(response => {
+        if (!response.ok) throw new Error("Dosya bulunamadı!");
+        return response.json();
+    })
+    .then(data => {
+        geojsonLayer = L.geoJson(data, {
+            style: function(feature) {
+                return {
+                    color: '#444',      
+                    weight: 1,          
+                    fillColor: '#fff',  
+                    fillOpacity: 0.05   
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                
+                // ✅ YENİ EKLENEN SATIR: Mouse üzerine gelince şehir adı çıksın
+                layer.bindTooltip(feature.properties.name, {
+                    sticky: true,      // Mouse'u takip etsin
+                    direction: 'top',  // Üstte çıksın
+                    className: 'city-label' // CSS ile özelleştirebilirsin
+                });
+
+                layer.on({
+                    mouseover: function(e) {
+                        var layer = e.target;
+                        layer.setStyle({
+                            color: '#000',    
+                            weight: 3,        
+                            fillOpacity: 0.2
+                        });
+                        layer.bringToFront();
+                    },
+                    mouseout: function(e) {
+                        geojsonLayer.resetStyle(e.target); 
+                    },
+                    click: function(e) {
+                        map.fitBounds(e.target.getBounds()); 
+                    }
+                });
+            }
+        }).addTo(map);
+        console.log("GeoJSON başarıyla yüklendi!");
+    })
+    .catch(err => {
+        console.error("GeoJSON hatası:", err);
+    });
+
+    locations.forEach(function(loc) {
+    // 1. İKON TANIMLAMA (Aynı kalabilir ama popupAnchor'u -10 yapalım ki yaklaşsın)
+        var blackDotIcon = L.divIcon({
+            className: 'custom-dot',
+            iconSize: [14, 14],
+            popupAnchor: [0, -10] 
+        });
+
+        var marker = L.marker([loc.lat, loc.lon], {icon: blackDotIcon}).addTo(map);
+
+        allMarkers.push({
+            instance: marker,
+            price: loc.price
+        });
+
+        // --- ✅ GÜNCELLENEN GALERİ (BOOTSTRAP CAROUSEL) ---
+        var carouselId = "carousel-" + loc.id;
+        var imagesHtml = "";
+
+        if (loc.images && loc.images.length > 0) {
+            loc.images.forEach(function(imgUrl, index) {
+                var activeClass = index === 0 ? "active" : "";
+                imagesHtml += `
+                    <div class="carousel-item ${activeClass}">
+                        <img src="${imgUrl}" class="d-block w-100" style="height:150px; object-fit:cover;">
+                    </div>`;
+            });
+        } else {
+            imagesHtml = `<div class="carousel-item active"><div style="width:100%; height:150px; background:#eee; display:flex; align-items:center; justify-content:center;">Resim Yok</div></div>`;
+        }
+
+        // --- ✅ GÜNCELLENEN POPUP İÇERİĞİ ---
+    // --- ✅ GÜNCELLENEN POPUP İÇERİĞİ (GÖZ BUTONU DAHİL) ---
+    var popupContent = `
+        <div class="map-card" style="width:230px;">
+            <div id="${carouselId}" class="carousel slide" data-bs-ride="false">
+                
+                <div class="photo-count-badge">
+                    <i class="fas fa-camera"></i> ${loc.images ? loc.images.length : 0}
+                </div>
+
+                <div class="carousel-inner">
+                    ${imagesHtml}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev" style="width:15%;">
+                    <span class="carousel-control-prev-icon" aria-hidden="true" style="width:20px;"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next" style="width:15%;">
+                    <span class="carousel-control-next-icon" aria-hidden="true" style="width:20px;"></span>
+                </button>
+            </div>
+
+            <div style="padding:10px;">
+                <div style="color:#28a745; font-weight:800; font-size:17px;">${loc.price.toLocaleString('tr-TR')} TL</div>
+                <h6 style="font-size:14px; margin:4px 0; font-weight:bold; color:#333;">${loc.title}</h6>
+                <div style="font-size:12px; color:#777; margin-bottom:10px;">
+                    <i class="fas fa-map-marker-alt"></i> ${loc.district}
+                </div>
+            
+                <div class="d-flex gap-1">
+                    <a href="${loc.url}" class="btn btn-dark btn-sm flex-grow-1" style="border-radius:6px; font-weight:bold;">
+                        Detayları Gör <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                    <button type="button" onclick="openQuickView(${loc.id})" class="btn btn-outline-dark btn-sm" style="border-radius:6px;" title="Hızlı Bakış">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+        // --- POPUP AYARLARI ---
+        var popup = L.popup({
+            closeButton: false,
+            offset: [0, -5], // Marker'a iyice yaklaştırıyoruz
+            minWidth: 230,
+            maxWidth: 230,
+            className: 'custom-popup-modern'
+        }).setContent(popupContent);
+
+        marker.bindPopup(popup);
+
+        // --- SİHİRLİ ZAMANLAYICI (TIMER) ---
+        var timer = null;
+
+        // 1. Mouse Noktaya Gelince: AÇ
+        marker.on('mouseover', function () {
+            // Eğer kapanma emri varsa iptal et
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+            this.openPopup();
+        });
+
+        // 2. Mouse Noktadan Çıkınca: BEKLE VE KAPAT
+        marker.on('mouseout', function () {
+            var that = this;
+            timer = setTimeout(function () {
+                that.closePopup();
+            }, 300); // 300ms mühlet veriyoruz
+        });
+
+        // 3. Popup Açıldığında Olayları Dinle
+        marker.on('popupopen', function (e) {
+            var popupNode = e.popup._container; // Popup'ın kendisi (Kutu)
+
+            // Mouse kutunun içine girerse: KAPANMAYI DURDUR
+            if (popupNode) {
+                popupNode.addEventListener('mouseenter', function () {
+                    if (timer) {
+                        clearTimeout(timer);
+                        timer = null;
+                    }
+                });
+
+                // Mouse kutudan çıkarsa: KAPAT
+                popupNode.addEventListener('mouseleave', function () {
+                    timer = setTimeout(function () {
+                        marker.closePopup();
+                    }, 300);
+                });
+            }
+        });
+
+        // İlana gitme işini başlığa tıklayarak yapıyoruz (HTML içinde <a> etiketi var)
+        // Noktaya tıklayınca da gitsin istersen:
+        marker.on('click', function() {
+            window.location.href = loc.url;
+        });
+
+    });
+
+    if (locations.length > 0) {
+        var group = new L.featureGroup(locations.map(loc => L.marker([loc.lat, loc.lon])));
+        map.fitBounds(group.getBounds().pad(0.1));
+    } else {
+         map.setView([37.76, 30.55], 13);
+    }
+    function toggleDarkMode() {
+        var mapContainer = document.querySelector('#map');
+        var btn = document.getElementById('themeBtn');
+
+        if (!mapContainer) {
+            console.error("Hacı, 'map' id'li div bulunamadı!");
+            return;
+        }
+
+        // --- ✅ 3. AŞAMA EKLEMESİ: KATMAN KONTROLÜ ---
+        // Eğer şu an haritada Uydu (satelliteMap) veya Arazi (terrainMap) katmanı aktifse kullanıcıya bilgi verelim
+        if (map.hasLayer(satelliteMap) || map.hasLayer(terrainMap)) {
+            console.warn("Dikkat: Uydu veya Arazi katmanında renkler ters dönebilir!");
+        }
+
+        mapContainer.classList.toggle('dark-mode-map');
+        console.log("Dark Mode Durumu:", mapContainer.classList.contains('dark-mode-map'));
+
+        if (mapContainer.classList.contains('dark-mode-map')) {
+            btn.innerHTML = '<i class="fas fa-sun"></i> ☀️ Gündüz Modu';
+            btn.style.backgroundColor = '#333';
+            btn.style.color = '#fff';
+        } else {
+            btn.innerHTML = '<i class="fas fa-moon"></i> 🌙 Gece Modu';
+            btn.style.backgroundColor = '#fff';
+            btn.style.color = '#000';
+        }
+    }
+    // --- GELİŞMİŞ FİYAT FİLTRELEME (SLIDER + MANUEL) ---
+    var priceSlider = document.getElementById('priceRange');
+    var priceInput = document.getElementById('manualPriceInput');
+    var priceLabel = document.getElementById('currentPriceLabel');
+
+    function applyFilter(value) {
+        var selectedPrice = parseInt(value);
+    
+        // 1. Etiketi güncelle (Milyon formatı)
+        var displayPrice = selectedPrice >= 1000000 ? (selectedPrice / 1000000).toFixed(1) + "M TL" : (selectedPrice / 1000).toFixed(0) + "K TL";
+        priceLabel.innerText = displayPrice;
+
+        // 2. Haritadaki markerları süz
+        allMarkers.forEach(function(item) {
+            if (item.price <= selectedPrice) {
+                if (!map.hasLayer(item.instance)) map.addLayer(item.instance);
+            } else {
+                map.removeLayer(item.instance);
+            }
+        });
+    }
+
+    // Slider değişince çalış
+    priceSlider.addEventListener('input', function(e) {
+        priceInput.value = e.target.value; // Kutuyu güncelle
+        applyFilter(e.target.value);
+    });
+
+    // Kutu değişince çalış
+    priceInput.addEventListener('input', function(e) {
+        priceSlider.value = e.target.value; // Slider'ı güncelle
+        applyFilter(e.target.value);
+    });
+    // Popup açıldığında içindeki Carousel'i canlandır
+    map.on('popupopen', function(e) {
+        var container = e.popup._contentNode;
+        var carouselEl = container.querySelector('.carousel');
+        if (carouselEl) {
+            // Bootstrap Carousel'i manuel başlat
+            var carousel = new bootstrap.Carousel(carouselEl, {
+                interval: false // Kendi kendine kaymasın, kullanıcı kaydırsın
+            });
+        }
+    });
+    function openQuickView(id) {
+        // 1. locations listesinden tıklanan ilanı bul
+        const loc = locations.find(l => l.id === id);
+        if (!loc) return;
+        console.log("Django'dan Gelen İlanın Ham Verisi:", loc);
+
+        const content = document.getElementById('quickViewContent');
+
+        // 2. Modal içeriğini oluştur (Modern Tasarım)
+        content.innerHTML = `
+            <div class="col-md-6 position-relative">
+                <img src="${loc.images && loc.images.length > 0 ? loc.images[0] : '/static/img/no-image.jpg'}" 
+                     class="img-fluid w-100 h-100" 
+                     style="object-fit: cover; min-height: 450px;">
+                <div class="position-absolute bottom-0 start-0 m-3">
+                    <span class="badge bg-dark px-3 py-2" style="border-radius: 20px; opacity: 0.8;">
+                        <i class="fas fa-camera me-1"></i> ${loc.images ? loc.images.length : 0} Fotoğraf
+                    </span>
+                </div>
+            </div>
+
+            <div class="col-md-6 p-4 d-flex flex-column" style="background-color: #ffffff;">
+                <div class="mb-auto">
+                    <h4 class="fw-bold mb-1" style="color: #212529 !important; letter-spacing: -0.5px;">${loc.title}</h4>
+                    <p class="text-muted mb-3 small">
+                        <i class="fas fa-map-marker-alt text-danger"></i> ${loc.city} / ${loc.district}
+                    </p>
+            
+                    <h3 class="fw-extrabold text-success mb-4" style="font-size: 1.8rem;">
+                        ${loc.price.toLocaleString('tr-TR')} <small style="font-size: 1rem; color: #28a745;">TL</small>
+                    </h3>
+
+                    <div class="row g-2 mb-4">
+                        <div class="col-6">
+                            <div class="p-3 border rounded-3 bg-light text-center">
+                                <i class="fas fa-th-large text-secondary mb-1"></i><br>
+                                <span class="small text-muted">Metrekare</span><br>
+                                <strong class="d-block">${loc.m2 || '---'} m²</strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded-3 bg-light text-center">
+                                <i class="fas fa-door-open text-secondary mb-1"></i><br>
+                                <span class="small text-muted">Oda Sayısı</span><br>
+                                <strong class="d-block">${loc.rooms || '---'}</strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded-3 bg-light text-center">
+                                <i class="fas fa-building text-secondary mb-1"></i><br>
+                                <span class="small text-muted">Bulunduğu Kat</span><br>
+                                <strong class="d-block">${loc.floor || 'Giriş'}. Kat</strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded-3 bg-light text-center">
+                                <i class="fas fa-fire text-secondary mb-1"></i><br>
+                                <span class="small text-muted">Isıtma</span><br>
+                                <strong class="d-block">Doğalgaz</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <a href="${loc.url}" class="btn btn-dark w-100 py-3 fw-bold shadow-sm" style="border-radius: 12px; letter-spacing: 0.5px;">
+                        TÜM DETAYLARI VE KONUMU GÖR <i class="fas fa-external-link-alt ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        `;
+
+        // 3. Modalı tetikle
+        var myModal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+        myModal.show();
+    }
+</script>
+
+{% endblock %}

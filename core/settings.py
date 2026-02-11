@@ -123,11 +123,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+# 1. Tarayıcıda görünen adres yolu
 STATIC_URL = 'static/'
+
+# 2. Django'nun geliştirme aşamasında dosya arayacağı klasör
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media Files (Kullanıcıların yüklediği fotoğraflar)
 MEDIA_URL = '/media/'
