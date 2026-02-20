@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-10">
+    <div class="col-md-11">
         <div class="card bg-dark border-secondary shadow mb-5">
             <div class="card-header border-secondary bg-warning text-dark">
                 <h3 class="mb-0"><i class="fa-solid fa-plus-circle"></i> Yeni İlan Oluştur</h3>
@@ -13,172 +13,181 @@
             <div class="card-body">
                 {% include 'partials/_alerts.html' %}
                 
-                <form method="POST" enctype="multipart/form-data" novalidate>
+                <form method="POST" enctype="multipart/form-data" id="listing-form" novalidate>
                     {% csrf_token %}
                     
-                    <h5 class="text-warning border-bottom border-secondary pb-2">Temel Bilgiler</h5>
-                    <div class="row g-3">
+                    <h5 class="text-warning border-bottom border-secondary pb-2">Kategori Seçimi</h5>
+                    <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label">Kategori</label>
-                            {{ listing_form.category }}
+                            <label class="form-label text-white">Ana Kategori</label>
+                            <select id="main-category" class="form-select bg-dark text-white border-secondary">
+                                <option value="">Seçiniz...</option>
+                                {% for cat in main_categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
-                        <div class="col-md-8">
-                            <label class="form-label">İlan Başlığı</label>
-                            {{ listing_form.title }}
-                        </div>
+                        
                         <div class="col-md-4">
-                            <label class="form-label">Fiyat (TL)</label>
-                            {{ listing_form.price }}
+                            <label class="form-label text-white">İşlem / Alt Tip</label>
+                            <select id="sub-category" class="form-select bg-dark text-white border-secondary" disabled>
+                                <option value="">Seçiniz...</option>
+                            </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">İl</label>
-                            {{ listing_form.city }}
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">İlçe</label>
-                            {{ listing_form.district }}
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Açıklama</label>
-                            {{ listing_form.description }}
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Ana Fotoğraf</label>
-                            {{ listing_form.main_photo }}
+                        
+                        <div class="col-md-4" id="final-category-container" style="display: none;">
+                            <label class="form-label text-white">İlan Tipi</label>
+                            <select name="category" id="final-category" class="form-select bg-dark text-white border-secondary">
+                                <option value="">Seçiniz...</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div id="housing-section" class="mt-4" style="display: none;">
-                        <h5 class="text-warning border-bottom border-secondary pb-2">Konut Detayları</h5>
+                    <div id="base-info-section" style="display: none;">
+                        <h5 class="text-warning border-bottom border-secondary pb-2">Temel Bilgiler</h5>
                         <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Emlak Tipi</label>
-                                {{ housing_form.emlak_tipi }}
+                            <div class="col-md-8">
+                                <label class="form-label">İlan Başlığı</label>
+                                {{ listing_form.title }}
                             </div>
-                            
-                            <div class="col-md-3">
-                                <label class="form-label">Oda Sayısı</label>
-                                {{ housing_form.oda_sayisi }}
+                            <div class="col-md-4">
+                                <label class="form-label">Fiyat (TL)</label>
+                                {{ listing_form.price }}
                             </div>
-                            
-                            <div class="col-md-3">
-                                <label class="form-label">m² (Brüt)</label>
-                                {{ housing_form.m2_brut }}
+                            <div class="col-md-4">
+                                <label class="form-label">İl</label>
+                                {{ listing_form.city }}
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label">m² (Net)</label>
-                                {{ housing_form.m2_net }}
+                            <div class="col-md-4">
+                                <label class="form-label">İlçe</label>
+                                {{ listing_form.district }}
                             </div>
-                            
-                            <div class="col-md-3">
-                                <label class="form-label">Isıtma</label>
-                                {{ housing_form.isitma }}
+                            <div class="col-12">
+                                <label class="form-label">Açıklama</label>
+                                {{ listing_form.description }}
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Bina Yaşı</label>
-                                {{ housing_form.bina_yasi }}
+                            <div class="col-12">
+                                <label class="form-label">Ana Fotoğraf</label>
+                                {{ listing_form.main_photo }}
                             </div>
+                        </div>
 
-                            <div class="col-md-3">
-                                <label class="form-label">Bulunduğu Kat</label>
-                                {{ housing_form.bulundugu_kat }}
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Kat Sayısı</label>
-                                {{ housing_form.kat_sayisi }}
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Banyo Sayısı</label>
-                                {{ housing_form.banyo_sayisi }}
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Mutfak Tipi</label>
-                                {{ housing_form.mutfak }}
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Aidat (TL)</label>
-                                {{ housing_form.aidat }}
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Site Adı (Varsa)</label>
-                                {{ housing_form.site_adi }}
-                            </div>
+                        <div id="housing-section" class="mt-4" style="display: none;">
+    <h5 class="text-warning border-bottom border-secondary pb-2">Konut Detayları</h5>
+    
+    <ul class="nav nav-tabs mb-4 border-secondary" id="housingTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active text-warning bg-dark border-secondary" id="technical-tab" data-bs-toggle="tab" data-bs-target="#technical" type="button" role="tab">1. Teknik Özellikler</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-warning bg-dark border-secondary" id="interior-tab" data-bs-toggle="tab" data-bs-target="#interior" type="button" role="tab">2. İç Özellikler</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-warning bg-dark border-secondary" id="exterior-tab" data-bs-toggle="tab" data-bs-target="#exterior" type="button" role="tab">3. Dış Mekan & Konum</button>
+        </li>
+    </ul>
 
-                            <div class="col-12 mt-3">
-                                <div class="form-check form-check-inline">
-                                    {{ housing_form.balkon }} 
-                                    <label class="form-check-label">Balkon</label>
+    <div class="tab-content text-white" id="housingTabsContent">
+        
+        <div class="tab-pane fade show active" id="technical" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-md-3"><label class="form-label">m² (Brüt)</label>{{ housing_form.m2_brut }}</div>
+                <div class="col-md-3"><label class="form-label">m² (Net)</label>{{ housing_form.m2_net }}</div>
+                <div class="col-md-3"><label class="form-label">Oda Sayısı</label>{{ housing_form.oda_sayisi }}</div>
+                <div class="col-md-3"><label class="form-label">Bina Yaşı</label>{{ housing_form.bina_yasi }}</div>
+                <div class="col-md-3"><label class="form-label">Bulunduğu Kat</label>{{ housing_form.bulundugu_kat }}</div>
+                <div class="col-md-3"><label class="form-label">Kat Sayısı</label>{{ housing_form.kat_sayisi }}</div>
+                <div class="col-md-3"><label class="form-label">Banyo Sayısı</label>{{ housing_form.banyo_sayisi }}</div>
+                <div class="col-md-3"><label class="form-label">Aidat (TL)</label>{{ housing_form.aidat }}</div>
+                
+                <div class="col-md-4"><label class="form-label">Isıtma Tipi</label>{{ housing_form.isitma }}</div>
+                <div class="col-md-4"><label class="form-label">Eşya Durumu</label>{{ housing_form.esya_durumu }}</div>
+                <div class="col-md-4"><label class="form-label">Kullanım Durumu</label>{{ housing_form.kullanim_durumu }}</div>
+                
+                <div class="col-md-4"><label class="form-label">Otopark</label>{{ housing_form.otopark }}</div>
+                <div class="col-md-4"><label class="form-label">Mutfak Tipi</label>{{ housing_form.mutfak_tipi }}</div>
+                <div class="col-md-4"><label class="form-label">Tapu Durumu</label>{{ housing_form.tapu_durumu }}</div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="interior" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-check">{{ housing_form.site_icinde }} <label class="ms-2">Site İçerisinde</label></div>
+                    <div class="form-check">{{ housing_form.krediye_uygun }} <label class="ms-2">Krediye Uygun</label></div>
+                    <div class="form-check">{{ housing_form.takas }} <label class="ms-2">Takaslı</label></div>
+                    <div class="form-check">{{ housing_form.balkon }} <label class="ms-2">Balkon</label></div>
+                    <div class="form-check">{{ housing_form.asansor }} <label class="ms-2">Asansör</label></div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">{{ housing_form.ebeveyn_banyosu }} <label class="ms-2">Ebeveyn Banyosu</label></div>
+                    <div class="form-check">{{ housing_form.giyinme_odasi }} <label class="ms-2">Giyinme Odası</label></div>
+                    <div class="form-check">{{ housing_form.camasir_odasi }} <label class="ms-2">Çamaşır Odası</label></div>
+                    <div class="form-check">{{ housing_form.kiler }} <label class="ms-2">Kiler</label></div>
+                    <div class="form-check">{{ housing_form.teras }} <label class="ms-2">Teras</label></div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">{{ housing_form.ankastre_mutfak }} <label class="ms-2">Ankastre Mutfak</label></div>
+                    <div class="form-check">{{ housing_form.somine }} <label class="ms-2">Şömine</label></div>
+                    <div class="form-check">{{ housing_form.akilli_ev }} <label class="ms-2">Akıllı Ev</label></div>
+                    <div class="form-check">{{ housing_form.celik_kapi }} <label class="ms-2">Çelik Kapı</label></div>
+                    <div class="form-check">{{ housing_form.goruntulu_diafon }} <label class="ms-2">Görüntülü Diafon</label></div>
+                    <div class="form-check">{{ housing_form.fiber_internet }} <label class="ms-2">Fiber İnternet</label></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="exterior" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-md-4 border-end border-secondary">
+                    <h6 class="text-info border-bottom border-secondary pb-1">Dış Mekan & Site</h6>
+                    <div class="form-check">{{ housing_form.yuzme_havuzu }} <label class="ms-2">Yüzme Havuzu</label></div>
+                    <div class="form-check">{{ housing_form.cocuk_parki }} <label class="ms-2">Çocuk Parkı</label></div>
+                    <div class="form-check">{{ housing_form.spor_salonu }} <label class="ms-2">Spor Salonu</label></div>
+                    <div class="form-check">{{ housing_form.guvenlik }} <label class="ms-2">Güvenlik</label></div>
+                    <div class="form-check">{{ housing_form.jenerator }} <label class="ms-2">Jeneratör</label></div>
+                </div>
+                <div class="col-md-4 border-end border-secondary">
+                    <h6 class="text-info border-bottom border-secondary pb-1">Manzara</h6>
+                    <div class="form-check">{{ housing_form.deniz_manzarasi }} <label class="ms-2">Deniz Manzarası</label></div>
+                    <div class="form-check">{{ housing_form.dogamanzarasi }} <label class="ms-2">Doğa Manzarası</label></div>
+                    <div class="form-check">{{ housing_form.sehir_manzarasi }} <label class="ms-2">Şehir Manzarası</label></div>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-info border-bottom border-secondary pb-1">Ulaşım & Yakınlık</h6>
+                    <div class="form-check">{{ housing_form.metroya_yakin }} <label class="ms-2">Metroya Yakın</label></div>
+                    <div class="form-check">{{ housing_form.metrobuse_yakin }} <label class="ms-2">Metrobüse Yakın</label></div>
+                    <div class="form-check">{{ housing_form.avmye_yakin }} <label class="ms-2">AVM'ye Yakın</label></div>
+                    <div class="form-check">{{ housing_form.okula_yakin }} <label class="ms-2">Okula Yakın</label></div>
+                    <div class="form-check">{{ housing_form.hastaneye_yakin }} <label class="ms-2">Hastaneye Yakın</label></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+                        <div id="land-section" class="mt-4" style="display: none;">
+                            <h5 class="text-warning border-bottom border-secondary pb-2">Arsa Detayları</h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">İmar Durumu</label>
+                                    {{ land_form.imar_durumu }}
                                 </div>
-                                <div class="form-check form-check-inline">
-                                    {{ housing_form.asansor }} 
-                                    <label class="form-check-label">Asansör</label>
+                                <div class="col-md-4">
+                                    <label class="form-label">Metrekare (m²)</label>
+                                    {{ land_form.m2 }}
                                 </div>
-                                <div class="form-check form-check-inline">
-                                    {{ housing_form.otopark }} 
-                                    <label class="form-check-label">Otopark</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    {{ housing_form.esyali }} 
-                                    <label class="form-check-label">Eşyalı</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    {{ housing_form.site_icerisinde }} 
-                                    <label class="form-check-label">Site İçerisinde</label>
+                                <div class="col-md-4">
+                                    <label class="form-label">Ada No</label>
+                                    {{ land_form.ada_no }}
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div id="land-section" class="mt-4" style="display: none;">
-                        <h5 class="text-warning border-bottom border-secondary pb-2">Arsa Detayları</h5>
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Emlak Tipi</label>
-                                {{ land_form.emlak_tipi }}
-                            </div>
-
-                            <div class="col-md-3">
-                                <label class="form-label">İmar Durumu</label>
-                                {{ land_form.imar_durumu }}
-                            </div>
-                            
-                            <div class="col-md-3">
-                                <label class="form-label">Metrekare (m²)</label>
-                                {{ land_form.m2 }}
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">m² Fiyatı</label>
-                                {{ land_form.m2_fiyat }}
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Ada No</label>
-                                {{ land_form.ada_no }}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Parsel No</label>
-                                {{ land_form.parsel_no }}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Pafta No</label>
-                                {{ land_form.pafta_no }}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">KAKS (Emsal)</label>
-                                {{ land_form.kaks }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Gabari</label>
-                                {{ land_form.gabari }}
-                            </div>
+                        <div class="d-grid gap-2 mt-5">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold">İlanı Yayınla</button>
                         </div>
                     </div>
-
-                    <div class="d-grid gap-2 mt-5">
-                        <button type="submit" class="btn btn-warning btn-lg fw-bold">İlanı Yayınla</button>
-                    </div>
-
                 </form>
             </div>
         </div>
@@ -186,32 +195,88 @@
 </div>
 
 <script>
-    // Django'dan gelen ID'leri JavaScript değişkenine alıyoruz
-    const konutID = "{{ konut_id }}";
-    const arsaID = "{{ arsa_id }}";
+    const mainCat = document.getElementById('main-category');
+    const subCat = document.getElementById('sub-category');
+    const finalCat = document.getElementById('final-category');
+    const finalContainer = document.getElementById('final-category-container');
+    const baseInfo = document.getElementById('base-info-section');
 
-    const categorySelect = document.querySelector('#id_category');
-    const housingSection = document.getElementById('housing-section');
-    const landSection = document.getElementById('land-section');
+    function resetForm() {
+        if (baseInfo) baseInfo.style.display = 'none';
+        if (finalContainer) finalContainer.style.display = 'none';
+        const housing = document.getElementById('housing-section');
+        const land = document.getElementById('land-section');
+        if (housing) housing.style.display = 'none';
+        if (land) land.style.display = 'none';
+    }
 
-    // Sayfa yüklendiğinde çalışacak (Hata alıp geri dönerse form durumu korunsun)
-    checkCategory();
+    // 1. Ana Kategori Değişince
+    mainCat.addEventListener('change', function() {
+        const parentId = this.value;
+        subCat.innerHTML = '<option value="">Seçiniz...</option>';
+        subCat.disabled = true;
+        resetForm();
 
-    // Kategori değiştiğinde çalışacak
-    categorySelect.addEventListener('change', checkCategory);
-
-    function checkCategory() {
-        const selectedValue = categorySelect.value;
-
-        // Hepsini gizle önce
-        housingSection.style.display = 'none';
-        landSection.style.display = 'none';
-
-        if (selectedValue === konutID) {
-            housingSection.style.display = 'block';
-        } else if (selectedValue === arsaID) {
-            landSection.style.display = 'block';
+        if (parentId) {
+            fetch(`/ajax/load-subcategories/?parent_id=${parentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        subCat.innerHTML = '<option value="">Seçiniz...</option>';
+                        data.forEach(item => {
+                            subCat.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+                        });
+                        subCat.disabled = false;
+                    }
+                });
         }
+    });
+
+    // 2. Alt Kategori Değişince
+    subCat.addEventListener('change', function() {
+        const parentId = this.value;
+        finalCat.innerHTML = '<option value="">Seçiniz...</option>';
+        if (finalContainer) finalContainer.style.display = 'none';
+        if (baseInfo) baseInfo.style.display = 'none';
+
+        if (parentId) {
+            fetch(`/ajax/load-subcategories/?parent_id=${parentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        finalCat.innerHTML = '<option value="">Seçiniz...</option>';
+                        data.forEach(item => {
+                            finalCat.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+                        });
+                        if (finalContainer) finalContainer.style.display = 'block';
+                    } else {
+                        // Alt kategori yoksa (Örn: Turistik Tesis)
+                        if (baseInfo) baseInfo.style.display = 'block';
+                        finalCat.innerHTML = `<option value="${parentId}" selected>${subCat.options[subCat.selectedIndex].text}</option>`;
+                        showDetailSections();
+                    }
+                });
+        }
+    });
+
+    // 3. Final Kategori Değişince
+    finalCat.addEventListener('change', function() {
+        if (this.value) {
+            if (baseInfo) baseInfo.style.display = 'block';
+            showDetailSections();
+        }
+    });
+
+    function showDetailSections() {
+        const mainCatOption = mainCat.options[mainCat.selectedIndex];
+        if (!mainCatOption) return;
+        
+        const mainCatName = mainCatOption.text;
+        const housing = document.getElementById('housing-section');
+        const land = document.getElementById('land-section');
+
+        if (housing) housing.style.display = (mainCatName === 'Konut') ? 'block' : 'none';
+        if (land) land.style.display = (mainCatName === 'Arsa') ? 'block' : 'none';
     }
 </script>
 {% endblock %}

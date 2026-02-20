@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import ListingForm, HousingDetailForm, LandDetailForm
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 
 def index(request):
     # Son eklenen 3 ilanı getir (Vitrin için)
@@ -60,12 +61,11 @@ def listings(request):
 
 @login_required(login_url='login')
 def create_listing(request):
-    # 1. POST İSTEĞİ (Kayıt Anı)
+    # Ana kategorileri (Konut, Arsa, İş Yeri vb.) en başta çekiyoruz
+    main_categories = Category.objects.filter(parent=None)
+
     if request.method == 'POST':
         listing_form = ListingForm(request.POST, request.FILES)
-        
-        # DİKKAT: prefix='konut' ve prefix='arsa' ekledik!
-        # Artık formlar birbirine karışmayacak.
         housing_form = HousingDetailForm(request.POST, prefix='konut')
         land_form = LandDetailForm(request.POST, prefix='arsa')
 
@@ -74,10 +74,17 @@ def create_listing(request):
             listing.seller = request.user
             listing.save()
 
-            category_slug = listing.category.slug
+            # --- YENİ MANTIK: ANA KATEGORİYİ BULMA ---
+            # Seçilen alt kategorinin (örn: Daire) en üstteki ana babasını buluyoruz
+            current_cat = listing.category
+            top_parent = current_cat
+            while top_parent.parent is not None:
+                top_parent = top_parent.parent
             
-            # KONUT İSE
-            if category_slug == 'konut':
+            ana_kategori_adi = top_parent.name # "Konut", "Arsa" vb.
+
+            # KONUT VE ALT DALLARI İSE
+            if ana_kategori_adi == 'Konut':
                 if housing_form.is_valid():
                     housing = housing_form.save(commit=False)
                     housing.listing = listing
@@ -85,13 +92,11 @@ def create_listing(request):
                     messages.success(request, 'Konut ilanı başarıyla oluşturuldu!')
                     return redirect('index')
                 else:
-                    print("--- KONUT FORM HATASI ---")
-                    print(housing_form.errors)
                     listing.delete()
-                    messages.error(request, 'Konut detaylarında eksik var.')
+                    messages.error(request, 'Konut detaylarında hata var.')
             
-            # ARSA İSE
-            elif category_slug == 'arsa':
+            # ARSA VE ALT DALLARI İSE
+            elif ana_kategori_adi == 'Arsa':
                 if land_form.is_valid():
                     land = land_form.save(commit=False)
                     land.listing = listing
@@ -99,40 +104,27 @@ def create_listing(request):
                     messages.success(request, 'Arsa ilanı başarıyla oluşturuldu!')
                     return redirect('index')
                 else:
-                    print("--- ARSA FORM HATASI ---")
-                    print(land_form.errors)
                     listing.delete()
-                    messages.error(request, 'Arsa detaylarında eksik var.')
+                    messages.error(request, 'Arsa detaylarında hata var.')
             
             else:
-                messages.warning(request, 'Bu kategori için form hazırlanmadı.')
+                # Şimdilik sadece Konut ve Arsa detay formları hazır olduğu için
+                messages.success(request, f'{ana_kategori_adi} ilanı başarıyla oluşturuldu! (Detay formu henüz yok)')
                 return redirect('index')
 
         else:
-            print("--- ANA İLAN FORMU HATASI ---")
-            print(listing_form.errors)
-            messages.error(request, 'Lütfen ana bilgileri (Başlık, Fiyat, Fotoğraf) kontrol edin.')
+            messages.error(request, 'Lütfen ana bilgileri kontrol edin.')
 
-    # 2. GET İSTEĞİ (Sayfa Açılışı)
     else:
         listing_form = ListingForm()
-        # Burada da prefix ekliyoruz ki HTML oluşurken isimleri 'konut-emlak_tipi' olsun
         housing_form = HousingDetailForm(prefix='konut')
         land_form = LandDetailForm(prefix='arsa')
-
-    try:
-        konut_id = Category.objects.get(slug='konut').id
-        arsa_id = Category.objects.get(slug='arsa').id
-    except:
-        konut_id = 0
-        arsa_id = 0
 
     context = {
         'listing_form': listing_form,
         'housing_form': housing_form,
         'land_form': land_form,
-        'konut_id': konut_id,
-        'arsa_id': arsa_id
+        'main_categories': main_categories, # HTML'deki ilk kutu için
     }
     return render(request, 'listings/create.html', context)
 
@@ -299,21 +291,22 @@ def map_view(request):
     for listing in listings:
         image_urls = []
         
-        # 1. Fotoğrafları Topla
+        # 1. Ana Fotoğraf
         if listing.main_photo:
             image_urls.append(listing.main_photo.url)
-        for photo in listing.listingphoto_set.all():
+        
+        # 2. Galeri Fotoğrafları (related_name='photos' kullandığın için böyle çağırıyoruz)
+        for photo in listing.photos.all(): 
             image_urls.append(photo.image.url)
             
-        # 2. Detay Bilgisini Çek (En Garanti Yol)
-        # getattr bazen ters ilişkilerde takılabilir, o yüzden direkt model üzerinden deneyelim
+        # 3. Detay Bilgisini Çek (related_name='housing_details' üzerinden)
+        # Eğer modelde related_name vermediysen 'housing_details' yerine 'housingdetail' yazmalısın
         try:
-            # Eğer related_name vermediysen Django 'housingdetail' (küçük harf) kullanır
-            detail = listing.housingdetail 
+            detail = listing.housing_details 
         except:
             detail = None
 
-        # 3. Listeye Ekle
+        # 4. Listeye Ekle
         locations.append({
             'id': listing.id,
             'title': listing.title,
@@ -323,8 +316,8 @@ def map_view(request):
             'images': image_urls,
             'url': f"/ilan/{listing.id}",
             'district': listing.district,
-            'city': "Isparta",
-            # Veriler
+            'city': listing.city if hasattr(listing, 'city') else "Isparta",
+            # Modalda (Hızlı Bakış) görünecek veriler
             'm2': detail.m2_brut if detail else "---",
             'rooms': detail.oda_sayisi if detail else "---",
             'floor': detail.bulundugu_kat if detail else "---",
@@ -336,3 +329,13 @@ def map_view(request):
         'locations_json': json.dumps(locations) 
     }
     return render(request, 'listings/map.html', context)
+
+def load_subcategories(request):
+    parent_id = request.GET.get('parent_id')
+    subcategories = Category.objects.filter(parent_id=parent_id).order_by('name')
+    
+    # Alt kategorileri JSON formatında (liste olarak) döndürüyoruz
+    data = [
+        {'id': sub.id, 'name': sub.name} for sub in subcategories
+    ]
+    return JsonResponse(data, safe=False)

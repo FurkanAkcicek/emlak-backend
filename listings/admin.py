@@ -1,5 +1,4 @@
 from django.contrib import admin
-# 1. BURAYA ListingPhoto'yu ekledik
 from .models import Category, Listing, HousingDetail, LandDetail, ListingPhoto 
 
 # --- MEVCUT KODLARIN (AYNEN KALIYOR) ---
@@ -15,10 +14,16 @@ class LandDetailInline(admin.StackedInline):
 
 # --- 2. YENİ EKLENEN KISIM: GALERİ FOTOĞRAFLARI ---
 class ListingPhotoInline(admin.TabularInline): 
-    # Not: 'TabularInline' kullandım, fotoğraflar alt alta değil yan yana daha az yer kaplasın diye.
     model = ListingPhoto
-    extra = 1 # Başlangıçta 1 tane boş resim yükleme kutusu göster
+    extra = 1 
     verbose_name = "Galeri Fotoğrafları"
+
+# --- KATEGORİ GÖRÜNÜMÜNÜ DÜZELTEN YENİ KISIM ---
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    # Bu satır sayesinde listede o "Konut > Satılık > Daire" yolunu göreceksin
+    list_display = ('__str__', 'slug') 
+    search_fields = ('name',)
 
 # --- MEVCUT ADMİN AYARLARIN ---
 class ListingAdmin(admin.ModelAdmin):
@@ -27,9 +32,8 @@ class ListingAdmin(admin.ModelAdmin):
     list_filter = ('category',)
     search_fields = ('title',)
     
-    # 3. BURAYI BİRLEŞTİRDİK:
     # Hem Konut, Hem Arsa, Hem de FOTOĞRAFLAR artık ilanın içinde görünecek.
     inlines = [HousingDetailInline, LandDetailInline, ListingPhotoInline]
 
-admin.site.register(Category)
+# Category kaydını yukarıda @admin.register ile yaptığımız için burada sadece Listing kaldı
 admin.site.register(Listing, ListingAdmin)

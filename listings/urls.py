@@ -41,4 +41,7 @@ urlpatterns = [
     
     # Token süresi bitince yenisini aldığımız yer (Refresh)
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # ... mevcut url'ler ...
+    path('ajax/load-subcategories/', views.load_subcategories, name='ajax_load_subcategories'),
 ]

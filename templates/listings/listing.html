@@ -148,24 +148,31 @@
                                         <td>{{ listing.category.name }}</td>
                                     </tr>
 
-                                    {% if listing.housingdetail %}
-                                        <tr><th>Emlak Tipi</th><td>{{ listing.housingdetail.emlak_tipi }}</td></tr>
-                                        <tr><th>Brüt m²</th><td>{{ listing.housingdetail.m2_brut }} m²</td></tr>
-                                        <tr><th>Net m²</th><td>{{ listing.housingdetail.m2_net }} m²</td></tr>
-                                        <tr><th>Oda Sayısı</th><td>{{ listing.housingdetail.oda_sayisi }}</td></tr>
-                                        <tr><th>Bina Yaşı</th><td>{{ listing.housingdetail.bina_yasi }}</td></tr>
-                                        <tr><th>Kat / Toplam Kat</th><td>{{ listing.housingdetail.bulundugu_kat }} / {{ listing.housingdetail.kat_sayisi }}</td></tr>
-                                        <tr><th>Isıtma</th><td>{{ listing.housingdetail.isitma }}</td></tr>
-                                        <tr><th>Banyo Sayısı</th><td>{{ listing.housingdetail.banyo_sayisi }}</td></tr>
-                                        <tr><th>Balkon</th><td>{% if listing.housingdetail.balkon %}<i class="fas fa-check text-success"></i> Var{% else %}<i class="fas fa-times text-danger"></i> Yok{% endif %}</td></tr>
-                                        <tr><th>Asansör</th><td>{% if listing.housingdetail.asansor %}<i class="fas fa-check text-success"></i> Var{% else %}<i class="fas fa-times text-danger"></i> Yok{% endif %}</td></tr>
-                                        <tr><th>Eşyalı</th><td>{% if listing.housingdetail.esyali %}<i class="fas fa-check text-success"></i> Evet{% else %}<i class="fas fa-times text-danger"></i> Hayır{% endif %}</td></tr>
-                                        <tr><th>Site İçinde</th><td>{% if listing.housingdetail.site_icerisinde %}<i class="fas fa-check text-success"></i> Evet{% else %}<i class="fas fa-times text-danger"></i> Hayır{% endif %}</td></tr>
-                                        {% if listing.housingdetail.site_icerisinde %}
-                                            <tr><th>Site Adı</th><td>{{ listing.housingdetail.site_adi }}</td></tr>
-                                            <tr><th>Aidat</th><td>{{ listing.housingdetail.aidat }} TL</td></tr>
+                                    {% if listing.housing_details %}
+                                        <tr><th>Brüt m²</th><td>{{ listing.housing_details.m2_brut }} m²</td></tr>
+                                        <tr><th>Net m²</th><td>{{ listing.housing_details.m2_net }} m²</td></tr>
+                                        <tr><th>Oda Sayısı</th><td>{{ listing.housing_details.oda_sayisi }}</td></tr>
+                                        <tr><th>Bina Yaşı</th><td>{{ listing.housing_details.bina_yasi }}</td></tr>
+                                        <tr><th>Kat / Toplam Kat</th><td>{{ listing.housing_details.bulundugu_kat }} / {{ listing.housing_details.kat_sayisi }}</td></tr>
+                                        <tr><th>Isıtma</th><td>{{ listing.housing_details.isitma }}</td></tr>
+                                        <tr><th>Banyo Sayısı</th><td>{{ listing.housing_details.banyo_sayisi }}</td></tr>
+                    
+                                        <tr><th>Balkon</th><td>{% if listing.housing_details.balkon %}<i class="fas fa-check text-success"></i> Var{% else %}<i class="fas fa-times text-danger"></i> Yok{% endif %}</td></tr>
+                                        <tr><th>Asansör</th><td>{% if listing.housing_details.asansor %}<i class="fas fa-check text-success"></i> Var{% else %}<i class="fas fa-times text-danger"></i> Yok{% endif %}</td></tr>
+                                        <tr><th>Eşyalı</th><td>{{ listing.housing_details.esya_durumu }}</td></tr>
+                    
+                                        <tr><th>Site İçinde</th><td>{% if listing.housing_details.site_icinde %}<i class="fas fa-check text-success"></i> Evet{% else %}<i class="fas fa-times text-danger"></i> Hayır{% endif %}</td></tr>
+                    
+                                        {% if listing.housing_details.site_icinde %}
+                                            <tr><th>Aidat</th><td>{{ listing.housing_details.aidat }} TL</td></tr>
                                         {% endif %}
+                                    {% else %}
+                                        <tr><td colspan="2" class="text-center text-muted">Bu ilan için detay bilgisi eklenmemiş.</td></tr>
                                     {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                                     {% if listing.landdetail %}
                                         <tr><th>Emlak Tipi</th><td>{{ listing.landdetail.emlak_tipi }}</td></tr>
